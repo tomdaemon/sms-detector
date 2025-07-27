@@ -1,0 +1,57 @@
+name: Build SMS Detector APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+    
+    - name: Make gradlew executable
+      run: |
+        cd android
+        chmod +x gradlew
+    
+    - name: Build APK
+      run: |
+        cd android
+        ./gradlew assembleRelease
+        
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: sms-detector-apk
+        path: android/app/build/outputs/apk/release/app-release.apk
+        
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        release_name: SMS Detector v1.0.${{ github.run_number }}
+        body: |
+          SMS Detector Android App
+          
+          ## Installation
+          1. Download the APK file below
+          2. Enable "Install from unknown sources" on your Android device
+          3. Install the APK
+          4. Grant SMS permissions when prompted
+          
+          ## Server Configuration
+          - API: http://192.168.1.150:3003
+          - WebSocket: ws://192.168.1.150:3002
+        draft: false
+        prerelease: false
